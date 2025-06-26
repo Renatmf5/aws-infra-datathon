@@ -44,6 +44,7 @@ const lambdaModelTrainingStack = new LambdaModelTrainingStack(app, 'LambdaModelT
   bucketName: s3DataLakeResources.bucket.bucketName,
   jobQueueName: mlLabBatchStack.jobQueue.jobQueueName,
   jobDefinitionName: mlLabBatchStack.jobDefinition.jobDefinitionName,
+  repositoryName: mlLabPipelineStack.repository.repositoryName,
 });
 
 /*
