@@ -6,5 +6,13 @@
     "us-east-1d",
     "us-east-1e",
     "us-east-1f"
-  ]
+  ],
+  "hosted-zone:account=324037302745:domainName=grupo-ever-rmf.com:privateZone=false:region=us-east-1": {
+    "Id": "/hostedzone/Z0961268LGKJ8EFBG34J",
+    "Name": "grupo-ever-rmf.com."
+  },
+  "hosted-zone:account=324037302745:domainName=grupo-ever-rmf.com:region=us-east-1": {
+    "Id": "/hostedzone/Z0961268LGKJ8EFBG34J",
+    "Name": "grupo-ever-rmf.com."
+  }
 }

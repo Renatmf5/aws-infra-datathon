@@ -15,6 +15,10 @@ export class ParameterStoreStack extends Stack {
       parameterName: "/my-fastApi-app/DATABASE_URL",
       stringValue: process.env.DATABASE_URL || "default_database_url"
     });
+    new ssm.StringParameter(this, "SystemDatabaseUrl", {
+      parameterName: "/my-fastApi-app/SYSTEM_DATABASE_URL",
+      stringValue: process.env.SYSTEM_DATABASE_URL || "default_database_url"
+    });
     new ssm.StringParameter(this, "JwtSecret", {
       parameterName: "/my-fastApi-app/JWT_SECRET",
       stringValue: process.env.JWT_SECRET || "default_jwt_secret"

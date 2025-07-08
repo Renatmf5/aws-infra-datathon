@@ -1,28 +1,29 @@
 import * as cdk from 'aws-cdk-lib';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { Construct } from 'constructs';
+import { NestedStack, NestedStackProps } from 'aws-cdk-lib';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as cpactions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
-export interface MlLabPipelineStackProps extends cdk.StackProps {
-  // Opcional: se fornecido, o pipeline atualizará o serviço ECS
-  ecsService?: ecs.BaseService;
-  repository: ecr.IRepository;
+export interface FastApiPipelineStackProps extends NestedStackProps {
+  ecsService?: ecs.BaseService; // Serviço ECS opcional para deploy
+  repository: ecr.IRepository;   // Repositório ECR opcional para reutilização
+  env?: cdk.Environment;         // Propriedade opcional para ambiente
 }
 
-export class MlLabPipelineStack extends cdk.Stack {
+export class FastApiPipelineStack extends NestedStack {
   public readonly repository: ecr.IRepository;
 
-  constructor(scope: Construct, id: string, props: MlLabPipelineStackProps) {
+  constructor(scope: Construct, id: string, props: FastApiPipelineStackProps) {
     super(scope, id, props);
 
     const { repository } = props;
 
     // Projeto CodeBuild que constrói a imagem e faz push para o ECR
-    const codeBuildProject = new codebuild.PipelineProject(this, 'MlLabBuildProject', {
+    const codeBuildProject = new codebuild.PipelineProject(this, 'FastApiBuildProject', {
       environment: {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
         privileged: true,
@@ -62,7 +63,7 @@ export class MlLabPipelineStack extends cdk.Stack {
               'docker push $ECR_REPO_URI:latest',
               'echo Build completed on `date`',
               // Cria o arquivo imagedefinitions.json para indicar a nova imagem
-              'printf \'[{"name":"MlLabContainer","imageUri":"%s:latest"}]\' $ECR_REPO_URI > imagedefinitions.json',
+              'printf \'[{"name":"FastApiContainer","imageUri":"%s:latest"}]\' $ECR_REPO_URI > imagedefinitions.json',
             ],
           },
         },
@@ -82,14 +83,14 @@ export class MlLabPipelineStack extends cdk.Stack {
     const buildOutput = new codepipeline.Artifact();
 
     // Criação do pipeline com stages de Source e Build
-    const pipeline = new codepipeline.Pipeline(this, 'MlLabPipeline', {
-      pipelineName: 'MlLabPipeline',
+    const pipeline = new codepipeline.Pipeline(this, 'FastApiPipeline', {
+      pipelineName: 'FastApiPipeline',
     });
 
     const sourceAction = new cpactions.GitHubSourceAction({
       actionName: 'GitHub_Source',
       owner: process.env.GITHUB_USERNAME || 'seu-usuario',
-      repo: process.env.REPOSITORY_ML_LAB || 'ml-lab-repo',
+      repo: process.env.REPOSITORY_FAST_API || 'FastApi-repo',
       branch: 'main',
       oauthToken: cdk.SecretValue.secretsManager('github/ingest-data-token', {
         jsonField: 'github_token',
@@ -133,7 +134,8 @@ export class MlLabPipelineStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'RepositoryURI', {
       value: repository.repositoryUri,
-      exportName: 'MlLabRepositoryURI',
+      exportName: 'FastApiRepositoryURI',
     });
+    this.repository = repository;
   }
 }

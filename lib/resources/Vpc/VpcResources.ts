@@ -12,7 +12,7 @@ export class VPCResourcesStack extends Stack {
 
     // Cria uma VPC com subnets públicas e privadas com internet gateway
     this.vpc = new Vpc(this, 'VPC_1', {
-      maxAzs: 1, // Número máximo de zonas de disponibilidade
+      maxAzs: 2, // Número máximo de zonas de disponibilidade
       natGateways: 0,
       createInternetGateway: true, // Cria um Internet Gateway
       subnetConfiguration: [
