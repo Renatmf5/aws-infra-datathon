@@ -4,8 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { FastApiEcsStack } from '../resources/Ecs/FastApiEcsStack';
 import { FastApiPipelineStack } from '../resources/Pipelines/FastApiPipelineStack';
-import { ApplicationLoadBalancer, ApplicationProtocol, ApplicationTargetGroup, ListenerAction, TargetType } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
+
 import { FastApiALBResources } from '../resources/ALB_ACM/FastApiALBResources';
 
 import { ACMResources } from '../resources/ALB_ACM/AcmResources';
@@ -22,6 +21,7 @@ export interface FastApiStackProps extends cdk.StackProps {
 export class FastApiStack extends cdk.Stack {
   public readonly fastApiEcs: FastApiEcsStack;
   public readonly fastApiAlbResources: FastApiALBResources;
+  public readonly acmResources: ACMResources;
 
   constructor(scope: Construct, id: string, props: FastApiStackProps) {
     super(scope, id, props);
@@ -49,6 +49,7 @@ export class FastApiStack extends cdk.Stack {
 
     // Instancia o construct que cria o certificado (ACM)
     const acmResources = new ACMResources(this, 'AcmResources');
+    this.acmResources = acmResources;
     const certificate = acmResources.apiCertificate;
 
     const albResources = new FastApiALBResources(this, 'FastApiALBResources', {

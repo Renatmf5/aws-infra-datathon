@@ -6,19 +6,19 @@ import {
 
 import { NestedStack, NestedStackProps } from 'aws-cdk-lib';
 
-export class LambdaExportTablesStack extends NestedStack {
-  public readonly exportTablesLambda: lambda.Function;
+export class LambdaImportTablesStack extends NestedStack {
+  public readonly importTablesLambda: lambda.Function;
 
   constructor(scope: Construct, id: string, props?: NestedStackProps) {
     super(scope, id, props);
 
-    // Criação da função Lambda para exportar tabelas
-    this.exportTablesLambda = new lambda.Function(this, 'ExportTablesLambda', {
-      functionName: 'export-tables',
+    // Criação da função Lambda para importar tabelas
+    this.importTablesLambda = new lambda.Function(this, 'ImportTablesLambda', {
+      functionName: 'import-tables',
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset('lib/resources/Lambda/Code/start-export-tables'),
-      timeout: Duration.minutes(5),
+      code: lambda.Code.fromAsset('lib/resources/Lambda/Code/start-import-tables'),
+      timeout: Duration.minutes(15),
       environment: {
         // Adicione variáveis de ambiente necessárias aqui
       },

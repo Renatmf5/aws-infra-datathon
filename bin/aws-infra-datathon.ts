@@ -8,11 +8,20 @@ import { LambdaModelTrainingStack } from '../lib/resources/Lambda/LambdaModelTra
 import { ParameterStoreStack } from '../lib/resources/Utils/ParameterStore';
 import { FastApiStack } from '../lib/stacks/FastApiStack';
 import { Route53Stack } from '../lib/stacks/Route53AppStack';
+import { MLOpsStack } from '../lib/stacks/MLOpsStack';
+import { NextJsAppStack } from '../lib/stacks/NextjsAppStack';
+import { CICDNextJsStack } from '../lib/resources/Pipelines/CodePipelineNextjsApp';
 
 
 const devEnv = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+};
+const stackPropsWEBAPP = {
+  logLevel: process.env.LOG_LEVEL || 'INFO',
+  sshPubKey: process.env.SSH_PUB_KEY || ' ',
+  cpuType: process.env.CPU_TYPE || 'X86_64',
+  instanceSize: process.env.INSTANCE_SIZE_WEBAPP || 'MICRO',
 };
 
 const app = new cdk.App();
@@ -51,23 +60,6 @@ const lambdaModelTrainingStack = new LambdaModelTrainingStack(app, 'LambdaModelT
   repositoryName: mlLabPipelineStack.repository.repositoryName,
 });
 
-/*
-const fastApiEcsStack = new FastApiEcsStack(app, 'FastApiEcsStack', {
-  vpc: vpcResourcesStack.vpc,
-  bucketArn: s3DataLakeResources.bucket,
-  env: devEnv,
-});
-
-// Stack Pipeline FastAPI - passando o serviço ECS para que possa atualizar a task
-const fastApiPipelineStack = new FastApiPipelineStack(app, 'FastApiPipelineStack', {
-  env: devEnv,
-  ecsService: fastApiEcsStack.ecsService,
-  repository: fastApiEcsStack.repository,
-});
-
-
-*/
-
 
 const fastApiStack = new FastApiStack(app, 'FastApiStack', {
   vpc: vpcResourcesStack.vpc,
@@ -75,22 +67,43 @@ const fastApiStack = new FastApiStack(app, 'FastApiStack', {
   env: devEnv,
 });
 
+const nextJsAppStack = new NextJsAppStack(app, 'NextJsAppStack', {
+  ...stackPropsWEBAPP,
+  env: devEnv,
+  vpc: vpcResourcesStack.vpc,
+  sshSecurityGroup: vpcResourcesStack.sshSecurityGroup,
+  acm: fastApiStack.acmResources, // Passando o ACM do FastAPI para o Next.js
+});
+
+// Criação do pipeline para o Next.js
+const nextJsPipeline = new CICDNextJsStack(app, 'NextJsPipeline', {
+  env: devEnv,
+});
+
 
 const route53AppStack = new Route53Stack(app, 'Route53AppStack', {
   fastApiLoadBalancer: fastApiStack.fastApiAlbResources.alb,
-  //NextJsLoadBalancer: fastApiStack.elasticNextJsALBResources.loadBalancer,
+  NextJsLoadBalancer: nextJsAppStack.albWeb.alb, // Passando o ALB do Next.js
   env: devEnv,
+});
+
+const mlOpsStack = new MLOpsStack(app, 'MLOpsStack', {
+  env: devEnv,
+  modelTrainingLambda: lambdaModelTrainingStack.startTrainModelLambda, // Passando a Lambda de treinamento do modelo
 });
 
 // Configurando dependências entre os stacks para forçar a ordem de criação:
 // VPC deve ser criada antes do pipeline; o ECS depende do pipeline (para o repositório) e da VPC;
 // e a Lambda depende do ECS.
 vpcResourcesStack.addDependency(s3DataLakeResources);
-/*
-fastApiStack.addDependency(vpcResourcesStack);
 mlLabPipelineStack.addDependency(vpcResourcesStack);
 mlLabBatchStack.addDependency(mlLabPipelineStack);
 lambdaModelTrainingStack.addDependency(mlLabBatchStack);
-*/
+fastApiStack.addDependency(vpcResourcesStack);
+nextJsAppStack.addDependency(fastApiStack);
+nextJsPipeline.addDependency(nextJsAppStack);
+route53AppStack.addDependency(nextJsAppStack);
+mlOpsStack.addDependency(route53AppStack);
+
 
 app.synth();

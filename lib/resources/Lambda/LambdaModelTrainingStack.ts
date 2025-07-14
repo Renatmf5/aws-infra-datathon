@@ -18,6 +18,8 @@ interface LambdaStackProps extends StackProps {
 }
 
 export class LambdaModelTrainingStack extends Stack {
+  public readonly startTrainModelLambda: lambda.IFunction;
+
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
 
@@ -57,6 +59,8 @@ export class LambdaModelTrainingStack extends Stack {
       actions: ['batch:SubmitJob', 'batch:DescribeJobs'],
       resources: ['*'],
     }));
+
+    this.startTrainModelLambda = lambdaFunction;
 
     // EventBridge Rule - ECR image Push > Lambda Trigger
     const rule = new events.Rule(this, 'ECRImagePushRule', {
